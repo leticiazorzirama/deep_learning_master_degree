@@ -1,3 +1,31 @@
+# ==============================================================================
+# UNIVERSIDADE DO VALE DO ITAJAÍ - UNIVALI
+# Programa de Pós-Graduação em Computação Aplicada - PPGCA
+# Mestrado em Computação Aplicada - MCA
+# Disciplina: Aprendizado Profundo
+# Professor: Prof. Dr. Felipe Viél
+# Conteúdo: Redes Neurais Convolucionais
+# Discente: Letícia Zorzi Rama
+# ==============================================================================
+# DESCRIÇÃO
+
+# Implementação e o treinamento de Redes Neurais Convolucionais (CNNs) utilizando a 
+# biblioteca TensorFlow/Keras. 
+
+# São exploradas diferentes arquiteturas e configurações de treinamento aplicadas aos 
+# conjuntos de dados MNIST, Fashion-MNIST e CIFAR-10, incluindo pré-processamento,
+# aumento de dados (data augmentation), avaliação de desempenho e visualização
+# das métricas de treinamento e validação.
+
+# Também são abordadas técnicas de Transfer Learning e Fine-Tuning utilizando
+# uma rede convolucional pré-treinada (Xception) para a classificação de imagens
+# de gatos e cachorros. 
+# 
+# O script inclui ainda experimentos com diferentes
+# arquiteturas, hiperparâmetros e estratégias de treinamento, permitindo
+# comparar o desempenho dos modelos e observar os padrões de aprendizado.
+# ==============================================================================
+
 # TO DOs
 # Transferir para jupyter notebook
 # GPU
@@ -85,6 +113,10 @@ def plots2(history, model, training, batch_size, epochs):
 
     plt.tight_layout()
     plt.show()
+
+# ==============================
+#  1. TREINANDO A PARTIR DO ZERO
+# ==============================
 
 # ===============
 #  MNIST dataset
@@ -554,6 +586,19 @@ for j in range(15):
   plt.imshow(img.astype('uint8'))
   plt.axis('off')
 
+# 8. Treine o modelo até obter pelo menos 80% de acurácia de validação. 
+# Note que será preciso um número elevado de épocas (100 ou mais), o que deve levar vários minutos.
+
+# Dicas
+# Certifique-se de usar uma taxa de aprendizado apropriada ao longo de todo o treinamento.
+# Por exemplo:
+# - Treine por N épocas com taxa constante, observe os resultados, depois continue o treinamento por mais N épocas, etc. 
+# Se em algum ponto o desempenho não estiver melhorando, reduza manualmente a taxa de aprendizado;
+# Utilize uma callback de decaimento, como ReduceLROnPlateau ou a genérica LearningRateScheduler; ou
+# Utilize um valor pequeno constante e tenha bastante paciência.
+# Fique à vontade para aprimorar o modelo se desejar. Para facilitar, você pode se basear em quaisquer outras referências 
+# ou tutoriais disponíveis, como por exemplo: Tutorial 1 ou Tutorial 2.
+
 # ==========
 #  MODELO 5 
 # ==========
@@ -650,9 +695,15 @@ print(f"Model {model} | Training {training} - Test accuracy: {round(score[1]*100
 mod52_plots1 = plots1(history)
 mod52_plots2 = plots2(history, model, training, batch_size, epochs)
 
-# =================================
-#  TRANSFER LEARNING e FINE-TUNING 
-# =================================
+# ==================================================================
+# 2. USANDO UMA REDE PRÉ-TREINADA - TRANSFER LEARNING e FINE-TUNING 
+# ==================================================================
+
+# 1. Partindo de alguma rede pré-treinada fornecida pelo Keras, treine uma rede 
+# convolucional para classificação entre gatos e cachorros. Para isto, siga este tutorial 
+# (provavelmente o mais atualizado no momento e escrito pelo próprio criador do Keras).
+# Antes de seguir o tutorial, provavelmente será útil conhecer os conceitos básicos da 
+# API funcional do Keras.
 
 # ======================
 #  CATS VS. DOG dataset
@@ -805,3 +856,10 @@ score = model6.evaluate(test_ds, verbose=0)
 print(f"Fine-tuning after Transfer-learning \n Model {model} | Training {training} - Test loss: {score[0]}")
 print(f"Fine-tuning after Transfer-learning \n Model {model} | Training {training} - Test accuracy: {round(score[1]*100, 2)} %")
 
+# ==================================================================
+# 3. VISUALIZANDO OS PADRÕES APRENDIDOS 
+# ==================================================================
+
+# 1. (OPCIONAL) Para alguma rede convolucional à sua escolha, visualize o que cada camada 
+# da rede "aprendeu"; mais precisamente, mostre exemplos de imagens de entrada que maximizam
+# a ativação dos filtros em cada camada. Para isso, siga este tutorial.
