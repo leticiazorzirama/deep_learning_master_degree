@@ -1,3 +1,7 @@
+# TO DOs
+# gpu
+# transferir para jupyter notebook
+
 # Importações
 
 import numpy as np
@@ -8,6 +12,7 @@ import sys
 print('Python version:', sys.version.split(' ')[0])
 
 import tensorflow as tf
+import cudnn
 print('TensorFlow version:', tf.__version__)
 print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
@@ -35,14 +40,14 @@ def plots1(history):
   plt.legend()
   plt.grid()
 
-def plots2(history, model=model, training=training, batch_size=batch_size, epochs=epochs):
+def plots2(history, model, training, batch_size, epochs):
     """
     Plots training and validation loss/accuracy curves with dynamic title and hyperparameters.
     """
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
 
     # --- Main Title & Subtitle Setup ---
-    # Main title using model name
+    # Main title using model version
     fig.suptitle(f"Model {model} | Training {training}", fontsize=16, fontweight='bold', y=1.03)
     
     # Subtitle using batch size and epochs
@@ -86,6 +91,7 @@ def plots2(history, model=model, training=training, batch_size=batch_size, epoch
 # No entanto, desta vez não realize qualquer pré-processamento nas imagens (como escalonamento); 
 # isto será feito internamente no modelo depois.
 
+# Carregar dataset
 mnist = tf.keras.datasets.mnist
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
 print(x_train.shape, y_train.shape) 
@@ -95,7 +101,7 @@ print(x_test.shape, y_test.shape)
 print(f"Train images Min: {x_train.min()}")
 print(f"Train images Max: {x_train.max()}")
 
-# Quantidade de classes e contagem de cada
+# Salvar quantidade de classes e contagem de instâncias por classe
 classes, counts = np.unique(y_train, return_counts=True)
 
 for cls, count in zip(classes, counts):
@@ -109,7 +115,7 @@ y_train = y_train[:-5000]
 x_train.dtype  
 input_shape = x_train.shape[-2:]
 
-# Redimensionar as dimensões de x externamente
+# Redimensionar as dimensões de x externamente (só para salvar aqui, porque está sendo feito internamente nos modelos)
 # x_train = np.expand_dims(x_train, -1)
 # x_val = np.expand_dims(x_val, -1)
 # x_test = np.expand_dims(x_test, -1)
@@ -142,7 +148,7 @@ def make_model():
     model = keras.Sequential(
         [
             keras.Input(shape=(28, 28)),
-            layers.Reshape((28, 28, -1)), # Redimensionar as dimensões de x internamente
+            layers.Reshape((28, 28, -1)), # Redimensionar subconjuntos de x
             layers.Rescaling(scale=1./255), # Rescalonar para [0, 1]
             layers.Conv2D(32, kernel_size=(3, 3), activation="relu"),
             layers.MaxPooling2D(pool_size=(2, 2)),
@@ -155,20 +161,23 @@ def make_model():
 )
     return model
 
-model1 = make_model()
-model1.summary()
-
 # 3. Desenvolva (i.e., aprimore a arquitetura) e treine sua rede (a partir do zero), tentando conseguir uma acurácia de validação de pelo menos 99.2%.
 # (Lembre que usando apenas camadas densas é difícil conseguir uma acurácia muito superior a 98%.) 
 # Em seguida, calcule a acurácia no conjunto de teste.
 
-# Treinamento 1
+# TREINAMENTO 1
 training = 1
+
+# Construir a arquitetura
+model1 = make_model()
+model1.summary()
+
+# Hiperparâmetros
 batch_size = 128
 epochs = 15 
-
 model1.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
+# Treinamento
 model1.fit(x_train, y_train, batch_size=batch_size, epochs=epochs)
 
 # Resultados
@@ -177,16 +186,23 @@ score = model1.evaluate(x_test, y_test, verbose=0)
 print(f"Model {model} | Training {training} - Test loss: {score[0]}")
 print(f"Model {model} | Training {training} - Test accuracy: {round(score[1]*100, 2)} %") 
 
-# 98.90% para acurácia de validação
-# 99.12% para a acurácia de teste
+# Visualização dos resultados
+mod11_plots1 = plots1(history)
+mod11_plots2 = plots2(history, model, training, batch_size, epochs)
 
-# Treinamento 2
+# TREINAMENTO 2
 training = 2
-batch_size = 128
-epochs = 30 # Épocas aumentadas de 15 para 30 para aumentar a acurácia de validação
 
+# Construir a arquitetura
+model1 = make_model()
+model1.summary()
+
+# Hiperparâmetros
+batch_size = 128
+epochs = 30 # Épocas aumentadas de 15 para 30 para aumentar a acurácia de validação e tentar chegar nos 99.2%
 model1.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
+# Treinamento
 model1.fit(x_train, y_train, batch_size=batch_size, epochs=epochs)
 
 # Resultados
@@ -195,11 +211,12 @@ score = model1.evaluate(x_test, y_test, verbose=0)
 print(f"Model {model} | Training {training} - Test loss: {score[0]}")
 print(f"Model {model} | Training {training} - Test accuracy: {round(score[1]*100, 2)} %") 
 
-# 99.45% para acurácia de validação
-# 99.23% para a acurácia de teste
+# Visualização dos resultados
+mod12_plots1 = plots1(history)
+mod12_plots2 = plots2(history, model, training, batch_size, epochs)
 
 # 4. (OPCIONAL) Por que o uso de Dropout faz com que o desempenho de treinamento comece bastante inferior ao de validação?
-# Porque o dropout é ativado apenas no treinamento e desativado na validação.
+# RESPOSTA: Porque o dropout é ativado apenas no treinamento e desativado na validação.
 
 # Dicas
 # Parta da arquitetura deste tutorial (com os devidos ajustes feitos no item anterior) e adicione uma camada densa com um número suficiente de unidades. Lembre-se de (ao contrário do tutorial) trazer para dentro do modelo qualquer pré-processamento necessário.
@@ -215,7 +232,7 @@ def make_model():
     model = keras.Sequential(
         [
             keras.Input(shape=(28, 28)),
-            layers.Reshape((28, 28, -1)), # Redimensionar as dimensões de x internamente
+            layers.Reshape((28, 28, -1)), # Redimensionar subconjuntos de x
             layers.Rescaling(scale=1./255), # Rescalonar para [0, 1]
             layers.Conv2D(32, kernel_size=(3, 3), activation="relu"),
             layers.MaxPooling2D(pool_size=(2, 2)),
@@ -230,16 +247,19 @@ def make_model():
 )
     return model
 
+# TREINAMENTO 1
+training = 1
+
+# Construir a arquitetura
 model2 = make_model()
 model2.summary()
 
-# Treinamento 1
-training = 1
+# Hiperparâmetros
 batch_size = 128
 epochs = 30
-
 model2.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
+# Treinamento
 model2.fit(x_train, y_train, batch_size=batch_size, epochs=epochs)
 
 # Resultados
@@ -248,26 +268,34 @@ score = model2.evaluate(x_test, y_test, verbose=0)
 print(f"Model {model} | Training {training} - Test loss: {score[0]}")
 print(f"Model {model} | Training {training} - Test accuracy: {round(score[1]*100, 2)} %") 
 
-# 99.33% para acurácia de validação
-# 99.04% para a acurácia de teste
+# Visualização dos resultados
+mod21_plots1 = plots1(history)
+mod22_plots2 = plots2(history, model, training, batch_size, epochs)
 
-# Treinamento 2
+# TREINAMENTO 2
 training = 2
+
+# Construir a arquitetura
+model2 = make_model()
+model2.summary()
+
+# Hiperparâmetros
 batch_size = 128
 epochs = 45
-
 model2.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
+# Treinamento
 model2.fit(x_train, y_train, batch_size=batch_size, epochs=epochs)
 
 # Resultados
 history = model2.history
 score = model2.evaluate(x_test, y_test, verbose=0)
 print(f"Model {model} | Training {training} - Test loss: {score[0]}")
-print(f"Model {model} | Training {training} - Test accuracy: {round(score[1]*100, 2)} %") # 98.9%
+print(f"Model {model} | Training {training} - Test accuracy: {round(score[1]*100, 2)} %") 
 
-# 99.69% para acurácia de validação
-# 98.99% para a acurácia de teste
+# Visualização dos resultados
+mod22_plots1 = plots1(history)
+mod22_plots2 = plots2(history, model, training, batch_size, epochs)
 
 # ======================
 #  FASHION-MNIST dataset
@@ -278,25 +306,26 @@ print(f"Model {model} | Training {training} - Test accuracy: {round(score[1]*100
 # Sem muito esforço é possível conseguir uma acurácia de validação de 92% (em comparação com 87% para uma rede densa). 
 # Se desejar, visualize algumas imagens do conjunto de treinamento e algumas predições erradas no conjunto de teste.
 
+# Carregar dataset
 fashion_mnist = tf.keras.datasets.fashion_mnist
 (x_train, y_train), (x_test, y_test) = fashion_mnist.load_data()
 print(x_train.shape, y_train.shape) 
 print(x_test.shape, y_test.shape)
 
-# Converter vetores y para matrizes binárias
-y_train = keras.utils.to_categorical(y_train, len(classes))
-y_test = keras.utils.to_categorical(y_test, len(classes))
-y_train.shape
-
 # Atributos do dataset
 print(f"Train images Min: {x_train.min()}")
 print(f"Train images Max: {x_train.max()}")
 
-# Quantidade de classes e contagem de cada
+# Salvar quantidade de classes e contagem de instâncias por classe
 classes, counts = np.unique(y_train, return_counts=True)
 
 for cls, count in zip(classes, counts):
     print(f"Class {cls}: {count} samples")
+
+# Converter vetores y para matrizes binárias
+y_train = keras.utils.to_categorical(y_train, len(classes))
+y_test = keras.utils.to_categorical(y_test, len(classes))
+y_train.shape
 
 # Visualização do dataset
 class_names = [
@@ -348,16 +377,19 @@ def make_model():
 )
     return model
 
+# TREINAMENTO 1
+training = 1
+
+# Construir a arquitetura
 model3 = make_model()
 model3.summary()
 
-# Treinamento 1
-training = 1
+# Hiperparâmetros
 batch_size = 128
 epochs = 45
-
 model3.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
+# Treinamento
 model3.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.2)
 
 # Resultados
@@ -366,8 +398,214 @@ score = model3.evaluate(x_test, y_test, verbose=0)
 print(f"Model {model} | Training {training} - Test loss: {score[0]}")
 print(f"Model {model} | Training {training} - Test accuracy: {round(score[1]*100, 2)} %") 
 
-# 90.09% para acurácia de validação
-# 89.58% para a acurácia de teste
+# Visualização dos resultados
+mod31_plots1 = plots1(history)
+mod32_plots2 = plots2(history, model, training, batch_size, epochs)
 
-# TO DO 
-# Plots for all
+# TREINAMENTO 2
+training = 2
+
+# Construir a arquitura
+model3 = make_model()
+model3.summary()
+
+# Hiperparâmetros
+batch_size = 128
+epochs = 90
+model3.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
+
+# Treinamento
+model3.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.2)
+
+# Resultados
+history = model3.history
+score = model3.evaluate(x_test, y_test, verbose=0)
+print(f"Model {model} | Training {training} - Test loss: {score[0]}")
+print(f"Model {model} | Training {training} - Test accuracy: {round(score[1]*100, 2)} %") 
+
+# Visualização dos resultados
+mod32_plots1 = plots1(history)
+mod32_plots2 = plots2(history, model, training, batch_size, epochs)
+
+# Sinal de sobreajuste a partir da época 40
+
+# ==================
+#  CIFAR-10 dataset
+# ==================
+
+# Carregar dataset
+from tensorflow.keras.datasets import cifar10
+(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+print('x_train.dtype:', x_train.dtype)
+print(x_train.shape, y_train.shape)
+print(x_test.shape, y_test.shape)
+
+# Atributos do dataset
+print(f"Train images Min: {x_train.min()}")
+print(f"Train images Max: {x_train.max()}")
+
+# Salvar quantidade de classes e contagem de instâncias por classe
+classes, counts = np.unique(y_train, return_counts=True)
+
+for cls, count in zip(classes, counts):
+    print(f"Class {cls}: {count} samples")
+
+# Redimensionr y para um tensor 1D com valores em [0, 1, ..., n_classes-1]
+# Par que se possa usar a perda sparse_categorical_crossentropy
+y_train = y_train.reshape(-1)
+y_test = y_test.reshape(-1)
+
+# Subconjunto de validação
+x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=5000, shuffle=False)
+print(x_train.shape, y_train.shape)
+print(x_val.shape, y_val.shape)
+print(x_test.shape, y_test.shape)
+
+# Visualização do dataset
+plt.figure(figsize=(12,6))
+for i in range(5):
+  for c in range(10):
+    plt.subplot(5, 10, 10*i+c+1)
+    img = x_train[y_train == c][i]
+    plt.imshow(img)
+    if i == 0:
+      plt.title('y = {}'.format(c))
+    plt.axis('off')    
+
+# 6. Inicialmente, apenas converta a mesma arquitetura utilizada no MNIST para o formato das imagens do CIFAR-10 e treine o modelo. 
+# Note que agora não é mais necessário usar uma camada Reshape. Certifique-se de escolher um batch size e taxa de aprendizado apropriadas. 
+# Observe que é difícil obter uma acurácia de validação superior a 73%.
+
+# =================================
+#  MODELO 4 - idêntico ao modelo 3
+# =================================
+model = "4"
+
+def make_model():
+    model = keras.Sequential(
+        [
+            keras.Input(shape=(32, 32, 3)),
+            layers.Rescaling(scale=1./255), # Rescalonar para [0, 1]
+            layers.Conv2D(32, kernel_size=(3, 3), activation="relu"),
+            layers.MaxPooling2D(pool_size=(2, 2)),
+            layers.Conv2D(64, kernel_size=(3, 3), activation="relu"),
+            layers.MaxPooling2D(pool_size=(2, 2)),
+            layers.Conv2D(128, kernel_size=(3, 3), activation="relu"), 
+            layers.MaxPooling2D(pool_size=(2, 2)),
+            layers.Flatten(),
+            layers.Dropout(0.5),
+            layers.Dense(len(classes), activation="softmax"),
+        ]
+)
+    return model
+
+# TREINAMENTO 1
+training = 1
+
+# Construir a arquitetura
+model4 = make_model()
+model4.summary()
+
+# Hiperparâmetros
+batch_size = 128
+epochs = 45
+model4.compile(loss="sparse_categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
+
+# Treinamento
+model4.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.2)
+
+# Resultados
+history = model4.history
+score = model4.evaluate(x_test, y_test, verbose=0)
+print(f"Model {model} | Training {training} - Test loss: {score[0]}")
+print(f"Model {model} | Training {training} - Test accuracy: {round(score[1]*100, 2)} %") 
+
+# Visualização dos resultados
+mod41_plots1 = plots1(history)
+mod42_plots2 = plots2(history, model, training, batch_size, epochs)
+
+# 7. Por que você acha que isso acontece? Explique.
+# Porque o CIFAR-10 é um dataset mais complexo que o MNIST e o Fashion-MNIST em 
+# termos de dimensões das imagens (32 x 32 x 3) e a arquitetura já se torna simples para
+# ser utilizada no CIFAR-10. 
+# As imagens do CIFAR-10, inclusive, além de coloridas, são mais heterogêneas, apresentando cenários mais
+# próximos do mundo real, diferentemente dos datasets MNIST e Fashion-MNIST cujas imagens são mais homogêneas
+# e abstratas.
+
+# Perturbação dos dados
+from tensorflow.keras.layers import RandomFlip, RandomTranslation
+data_augmentation = keras.Sequential(
+    [
+        RandomTranslation(height_factor=0.1, width_factor=0.1),
+        RandomFlip(mode='horizontal'),
+    ],
+    name='data_augmentation',
+)
+
+# Visualização da perturbação dos dados
+plt.figure(figsize=(10, 6))
+i = 0
+for j in range(15):
+  img = data_augmentation(x_train[[i]])[0].numpy()
+  plt.subplot(3, 5, j+1)
+  plt.imshow(img.astype('uint8'))
+  plt.axis('off')
+
+# ==========
+#  MODELO 5 
+# ==========
+model = 5
+
+# Modelo baseline
+# Princípios gerais dos modelos VGG
+# Blocos: filtros 3 x 3 e max pooling 2 x 2
+# Blocos empilhados com número crescente de filtros
+# Padding para garantir que dimensões compatíveis dos features maps e inputs
+def make_model():
+    model = keras.Sequential(
+        [
+            keras.Input(shape=(32, 32, 3)),
+            layers.Rescaling(scale=1./255), # Rescalonar para [0, 1],
+            data_augmentation,
+            layers.Conv2D(32, kernel_size=(3, 3), activation="relu", kernel_initializer='he_uniform', padding='same'),
+            layers.Conv2D(32, kernel_size=(3, 3), activation="relu", kernel_initializer='he_uniform', padding='same'),
+            layers.MaxPooling2D(pool_size=(2, 2)),
+            layers.Conv2D(64, kernel_size=(3, 3), activation="relu", kernel_initializer='he_uniform', padding='same'),
+            layers.Conv2D(64, kernel_size=(3, 3), activation="relu", kernel_initializer='he_uniform', padding='same'),
+            layers.MaxPooling2D(pool_size=(2, 2)),
+            layers.Conv2D(128, kernel_size=(3, 3), activation="relu", kernel_initializer='he_uniform', padding='same'),
+            layers.Conv2D(128, kernel_size=(3, 3), activation="relu", kernel_initializer='he_uniform', padding='same'),
+            layers.MaxPooling2D(pool_size=(2, 2)),
+            layers.Conv2D(256, kernel_size=(3, 3), activation="relu", kernel_initializer='he_uniform', padding='same'),
+            layers.Conv2D(256, kernel_size=(3, 3), activation="relu", kernel_initializer='he_uniform', padding='same'),
+            layers.MaxPooling2D(pool_size=(2, 2)),
+            layers.Flatten(),
+            layers.Dense(128, activation='relu', kernel_initializer='he_uniform'),
+            layers.Dense(len(classes), activation="softmax"),
+            ]
+)
+    return model
+            
+# TREINAMENTO 1
+training = 1
+
+# Construir a arquitetura
+model5 = make_model()
+model5.summary()
+
+# Hiperparâmetros
+opt = keras.optimizers.Adam(learning_rate=0.01)
+model5.compile(loss="sparse_categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
+
+# Treinamento
+model5.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.2)
+
+# Resultados
+history = model5.history
+score = model5.evaluate(x_test, y_test, verbose=0)
+print(f"Model {model} | Training {training} - Test loss: {score[0]}")
+print(f"Model {model} | Training {training} - Test accuracy: {round(score[1]*100, 2)} %") 
+
+# Visualização dos resultados
+mod51_plots1 = plots1(history)
+mod52_plots2 = plots2(history, model, training, batch_size, epochs)
