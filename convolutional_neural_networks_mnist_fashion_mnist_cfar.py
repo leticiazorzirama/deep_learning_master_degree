@@ -27,9 +27,13 @@
 # ==============================================================================
 
 # TO DOs
-# Transferir para jupyter notebook
 # GPU
-# Plotagens com métricas de treino e validação 
+# Deixar só plots2()
+# Plots para transfer learning e fine tuning
+# Melhor resultados transfer learning e fine tuning
+# Fazer parte 3 < reforçar na atividade da disciplina, importante para o mestrado
+# Transferir para jupyter notebook
+# Analisar
 
 # Importações
 
@@ -161,8 +165,14 @@ input_shape = x_train.shape[-2:]
 
 # Converter vetores y para matrizes binárias
 y_train = keras.utils.to_categorical(y_train, len(classes))
+y_val = keras.utils.to_categorical(y_val, len(classes))
 y_test = keras.utils.to_categorical(y_test, len(classes))
 print(y_train.shape)
+
+# ==========
+#  MODELO 1
+# ==========
+model = "1"
 
 # 2. Usando o Keras, construa uma rede neural com pelo menos uma camada convolucional (tf.keras.layers.Conv2D) e 
 # confirme que não há nenhum erro de definição. Organize seu código em uma função de criação do modelo, conforme o 
@@ -173,11 +183,6 @@ print(y_train.shape)
 
 # Camadas convolucionais 2D exigem que a entrada seja um tensor 3D, sendo o último eixo correspondente ao número de 
 # canais (no caso, apenas 1, para uma imagem em tons de cinza).
-
-# ==========
-#  MODELO 1
-# ==========
-model = "1"
 
 def make_model():
     model = keras.Sequential(
@@ -196,10 +201,6 @@ def make_model():
 )
     return model
 
-# 3. Desenvolva (i.e., aprimore a arquitetura) e treine sua rede (a partir do zero), tentando conseguir uma acurácia de validação de pelo menos 99.2%.
-# (Lembre que usando apenas camadas densas é difícil conseguir uma acurácia muito superior a 98%.) 
-# Em seguida, calcule a acurácia no conjunto de teste.
-
 # TREINAMENTO 1
 training = 1
 
@@ -213,7 +214,7 @@ epochs = 15
 model1.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
 # Treinamento
-model1.fit(x_train, y_train, batch_size=batch_size, epochs=epochs)
+model1.fit(x_train, y_train, batch_size, epochs, validation_data=(x_val, y_val))
 
 # Resultados
 history = model1.history
@@ -238,7 +239,7 @@ epochs = 30 # Épocas aumentadas de 15 para 30 para aumentar a acurácia de vali
 model1.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
 # Treinamento
-model1.fit(x_train, y_train, batch_size=batch_size, epochs=epochs)
+model1.fit(x_train, y_train, batch_size, epochs, validation_data=(x_val, y_val))
 
 # Resultados
 history = model1.history
@@ -250,18 +251,20 @@ print(f"Model {model} | Training {training} - Test accuracy: {round(score[1]*100
 mod12_plots1 = plots1(history)
 mod12_plots2 = plots2(history, model, training, batch_size, epochs)
 
-# 4. (OPCIONAL) Por que o uso de Dropout faz com que o desempenho de treinamento comece bastante inferior ao de validação?
-# RESPOSTA: Porque o dropout é ativado apenas no treinamento e desativado na validação.
-
-# Dicas
-# Parta da arquitetura deste tutorial (com os devidos ajustes feitos no item anterior) e adicione uma camada densa com um número suficiente de unidades. Lembre-se de (ao contrário do tutorial) trazer para dentro do modelo qualquer pré-processamento necessário.
-# Visualize os gráficos do treinamento usando a função plots fornecida (ou a ferramenta TensorBoard).
-# Ao usar camadas convolucionais com GPU, a execução paralelizada torna impossível garantir a reproducibilidade, portanto, não perca tempo com isso.
-
 # ==========
 #  MODELO 2
 # ==========
 model = "2"
+
+# 3. Desenvolva (i.e., aprimore a arquitetura) e treine sua rede (a partir do zero), tentando conseguir uma acurácia de validação de pelo menos 99.2%.
+# (Lembre que usando apenas camadas densas é difícil conseguir uma acurácia muito superior a 98%.) 
+# Em seguida, calcule a acurácia no conjunto de teste.
+
+# Dicas
+# Parta da arquitetura deste tutorial (com os devidos ajustes feitos no item anterior) e adicione uma camada densa com um número suficiente de unidades. 
+# Lembre-se de (ao contrário do tutorial) trazer para dentro do modelo qualquer pré-processamento necessário.
+# Visualize os gráficos do treinamento usando a função plots fornecida (ou a ferramenta TensorBoard).
+# Ao usar camadas convolucionais com GPU, a execução paralelizada torna impossível garantir a reproducibilidade, portanto, não perca tempo com isso.
 
 def make_model():
     model = keras.Sequential(
@@ -273,10 +276,11 @@ def make_model():
             layers.MaxPooling2D(pool_size=(2, 2)),
             layers.Conv2D(64, kernel_size=(3, 3), activation="relu"),
             layers.MaxPooling2D(pool_size=(2, 2)),
-            layers.Conv2D(128, kernel_size=(3, 3), activation="relu"), # Camada adicionada 
+            layers.Conv2D(128, kernel_size=(3, 3), activation="relu"), # Camada de convolução adicionada 
             layers.MaxPooling2D(pool_size=(2, 2)),
             layers.Flatten(),
             layers.Dropout(0.5),
+            layers.Dense(128, activation="relu"), # Camada densa adicionada
             layers.Dense(len(classes), activation="softmax"),
         ]
 )
@@ -295,7 +299,7 @@ epochs = 30
 model2.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
 # Treinamento
-model2.fit(x_train, y_train, batch_size=batch_size, epochs=epochs)
+model2.fit(x_train, y_train, batch_size, epochs, validation_data=(x_val, y_val))
 
 # Resultados
 history = model2.history
@@ -320,7 +324,7 @@ epochs = 45
 model2.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
 # Treinamento
-model2.fit(x_train, y_train, batch_size=batch_size, epochs=epochs)
+model2.fit(x_train, y_train, batch_size, epochs, validation_data=(x_val, y_val))
 
 # Resultados
 history = model2.history
@@ -331,6 +335,9 @@ print(f"Model {model} | Training {training} - Test accuracy: {round(score[1]*100
 # Visualização dos resultados
 mod22_plots1 = plots1(history)
 mod22_plots2 = plots2(history, model, training, batch_size, epochs)
+
+# 4. (OPCIONAL) Por que o uso de Dropout faz com que o desempenho de treinamento comece bastante inferior ao de validação?
+# RESPOSTA: Porque o dropout é ativado apenas no treinamento e desativado na validação.
 
 # ======================
 #  FASHION-MNIST dataset
@@ -425,7 +432,7 @@ epochs = 45
 model3.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
 # Treinamento
-model3.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.2)
+model3.fit(x_train, y_train, batch_size, epochs, validation_split=0.2) # Dividir subconjuntos de treino e validação
 
 # Resultados
 history = model3.history
@@ -450,7 +457,7 @@ epochs = 90
 model3.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
 # Treinamento
-model3.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.2)
+model3.fit(x_train, y_train, batch_size, epochs, validation_split=0.2) # Dividir subconjuntos de treino e validação
 
 # Resultados
 history = model3.history
@@ -485,16 +492,17 @@ classes, counts = np.unique(y_train, return_counts=True)
 for cls, count in zip(classes, counts):
     print(f"Class {cls}: {count} samples")
 
-# Redimensionr y para um tensor 1D com valores em [0, 1, ..., n_classes-1]
-# Par que se possa usar a perda sparse_categorical_crossentropy
-y_train = y_train.reshape(-1)
-y_test = y_test.reshape(-1)
-
 # Subconjunto de validação
 x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=5000, shuffle=False)
 print(x_train.shape, y_train.shape)
 print(x_val.shape, y_val.shape)
 print(x_test.shape, y_test.shape)
+
+# Redimensionr y para um tensor 1D com valores em [0, 1, ..., n_classes-1]
+# Par que se possa usar a perda sparse_categorical_crossentropy
+y_train = y_train.reshape(-1)
+y_val = y_val.reshape(-1)
+y_test = y_test.reshape(-1)
 
 # Visualização do dataset
 plt.figure(figsize=(12,6))
@@ -507,14 +515,14 @@ for i in range(5):
       plt.title(f'y = {c}')
     plt.axis('off')    
 
-# 6. Inicialmente, apenas converta a mesma arquitetura utilizada no MNIST para o formato das imagens do CIFAR-10 e treine o modelo. 
-# Note que agora não é mais necessário usar uma camada Reshape. Certifique-se de escolher um batch size e taxa de aprendizado apropriadas. 
-# Observe que é difícil obter uma acurácia de validação superior a 73%.
-
 # =================================
 #  MODELO 4 - idêntico ao modelo 3
 # =================================
 model = "4"
+
+# 6. Inicialmente, apenas converta a mesma arquitetura utilizada no MNIST para o formato das imagens do CIFAR-10 e treine o modelo. 
+# Note que agora não é mais necessário usar uma camada Reshape. Certifique-se de escolher um batch size e taxa de aprendizado apropriadas. 
+# Observe que é difícil obter uma acurácia de validação superior a 73%.
 
 def make_model():
     model = keras.Sequential(
@@ -547,7 +555,7 @@ epochs = 45
 model4.compile(loss="sparse_categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
 # Treinamento
-model4.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.2)
+model4.fit(x_train, y_train, batch_size, epochs, validation_data=(x_val, y_val))
 
 # Resultados
 history = model4.history
@@ -648,7 +656,7 @@ opt = keras.optimizers.Adam(learning_rate=0.01)
 model5.compile(loss="sparse_categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
 
 # Treinamento
-model5.fit(x_train, y_train, batch_size=batch_size, epochs=epochs)
+model5.fit(x_train, y_train, batch_size, epochs, validation_data=(x_val, y_val))
 
 # Resultados
 history = model5.history
@@ -683,7 +691,7 @@ reduce_lr = callbacks.ReduceLROnPlateau(
 )
 
 # Treinamento
-model5.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, callbacks=[reduce_lr])
+model5.fit(x_train, y_train, batch_size, epochs, validation_data=(x_val, y_val), callbacks=[reduce_lr])
 
 # Resultados
 history = model5.history
@@ -755,6 +763,7 @@ def data_augmentation(x):
         x = layer(x)
     return x
 
+# Aplicar a perturbação dos dados somente no dataset de treino
 train_ds = train_ds.map(lambda x, y: (data_augmentation(x), y))
 
 # Batch e prefetching ?
@@ -780,15 +789,15 @@ for images, labels in train_ds.take(1):
 # ==========
 model = 6
 
-# Treinamento 1
-training = 1
-
 # Carregar modelo Xception pré-treinado
 base_model = keras.applications.Xception(
     weights="imagenet",  # Carregar pesos do modelo treinado com o ImageNet
     input_shape=(150, 150, 3),
     include_top=False, # Não incluir o classificador no topo da arquitetura
 ) 
+
+# TREINAMENTO 1
+training = 1
 
 # Congelar
 base_model.trainable = False
@@ -821,7 +830,7 @@ model6.compile(
 )
 
 # Treinar apenas o topo do modelo
-model6.fit(train_ds, epochs=epochs, validation_data=validation_ds, shuffle=False)
+model6.fit(train_ds, batch_size=batch_size, epochs=epochs, validation_data=validation_ds, shuffle=False)
 
 # Resultados
 history = model6.history
@@ -829,9 +838,16 @@ score = model6.evaluate(test_ds, verbose=0)
 print(f"Transfer-learning \n Model {model} | Training {training} - Test loss: {score[0]}")
 print(f"Transfer-learning \n Model {model} | Training {training} - Test accuracy: {round(score[1]*100, 2)} %") 
 
+# Visualização dos resultados
+mod61_plots1 = plots1(history)
+mod61_plots2 = plots2(history, model, training, batch_size, epochs)
+
 # FINE-TUNING
 # Descongelar o modelo
 # Irá continuar rodando no modo inferência
+
+# TREINAMENTO 2
+training = 2
 
 # Descongelar
 base_model.trainable = True
@@ -848,13 +864,17 @@ model6.compile(
 )
 
 # Treinar apenas o topo do modelo
-model6.fit(train_ds, epochs=epochs, validation_data=validation_ds, shuffle=False)
+model6.fit(train_ds, batch_size=batch_size, epochs=epochs, validation_data=validation_ds, shuffle=False)
 
 # Resultados
 history = model6.history
 score = model6.evaluate(test_ds, verbose=0)
 print(f"Fine-tuning after Transfer-learning \n Model {model} | Training {training} - Test loss: {score[0]}")
 print(f"Fine-tuning after Transfer-learning \n Model {model} | Training {training} - Test accuracy: {round(score[1]*100, 2)} %")
+
+# Visualização dos resultados
+mod62_plots1 = plots1(history)
+mod62_plots2 = plots2(history, model, training, batch_size, epochs)
 
 # ==================================================================
 # 3. VISUALIZANDO OS PADRÕES APRENDIDOS 
