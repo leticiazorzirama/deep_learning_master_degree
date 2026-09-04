@@ -27,13 +27,7 @@
 # ==============================================================================
 
 # TO DOs
-# GPU
-# Deixar só plots2()
-# Plots para transfer learning e fine tuning
-# Melhor resultados transfer learning e fine tuning
 # Fazer parte 3 < reforçar na atividade da disciplina, importante para o mestrado
-# Transferir para jupyter notebook
-# Analisar
 
 # Importações
 
@@ -54,28 +48,10 @@ print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 
 import keras
 from keras import callbacks, layers
-from keras.applications.resnet_v2 import ResNet50V2, preprocess_input
 
-# Funções de plotagens
+# Função de plotagem
 
-def plots1(history):
-  plt.figure(figsize=(14,4))
-  plt.subplot(1,2,1)
-  plt.plot(history.history['loss'], '.-', label='Train loss')
-  if 'val_loss' in history.history:
-    plt.plot(history.history['val_loss'], '.-', label='Val loss')
-  plt.xlabel('Epochs')
-  plt.legend()
-  plt.grid()
-  plt.subplot(1,2,2)
-  plt.plot(history.history['accuracy'], '.-', label='Train accuracy')
-  plt.xlabel('Epochs')
-  if 'val_accuracy' in history.history:
-    plt.plot(history.history['val_accuracy'], '.-', label='Val accuracy')
-  plt.legend()
-  plt.grid()
-
-def plots2(history, model, training, batch_size, epochs):
+def plots(history, model, training, batch_size, epochs):
     """
     Plots training and validation loss/accuracy curves with dynamic title and hyperparameters.
     """
@@ -103,8 +79,21 @@ def plots2(history, model, training, batch_size, epochs):
     ax1.grid(True, linestyle=':', alpha=0.6)
 
     # --- Accuracy Plot ---
-    acc_key = 'accuracy' if 'accuracy' in history.history else 'acc'
-    val_acc_key = 'val_accuracy' if 'val_accuracy' in history.history else 'val_acc'
+    acc_key = (
+        'accuracy'
+        if 'accuracy' in history.history
+        else 'binary_accuracy'
+        if 'binary_accuracy' in history.history
+        else 'acc'
+    )
+
+    val_acc_key = (
+        'val_accuracy'
+        if 'val_accuracy' in history.history
+        else 'val_binary_accuracy'
+        if 'val_binary_accuracy' in history.history
+        else 'val_acc'
+    )
 
     ax2.plot(history.history[acc_key], label='Train Accuracy', linewidth=2)
     if val_acc_key in history.history:
@@ -152,7 +141,6 @@ y_val = y_train[-5000:]
 x_train = x_train[:-5000] # conjunto menos as 5000 amostras finais
 y_train = y_train[:-5000]
 print(x_train.dtype)
-input_shape = x_train.shape[-2:]
 
 # Redimensionar as dimensões de x externamente (só para salvar aqui, porque está sendo feito internamente nos modelos)
 # x_train = np.expand_dims(x_train, -1)
@@ -172,7 +160,7 @@ print(y_train.shape)
 # ==========
 #  MODELO 1
 # ==========
-model = "1"
+model = 1
 
 # 2. Usando o Keras, construa uma rede neural com pelo menos uma camada convolucional (tf.keras.layers.Conv2D) e 
 # confirme que não há nenhum erro de definição. Organize seu código em uma função de criação do modelo, conforme o 
@@ -223,8 +211,7 @@ print(f"Model {model} | Training {training} - Test loss: {score[0]}")
 print(f"Model {model} | Training {training} - Test accuracy: {round(score[1]*100, 2)} %") 
 
 # Visualização dos resultados
-mod11_plots1 = plots1(history)
-mod11_plots2 = plots2(history, model, training, batch_size, epochs)
+mod11_plots = plots(history, model, training, batch_size, epochs)
 
 # TREINAMENTO 2
 training = 2
@@ -248,13 +235,12 @@ print(f"Model {model} | Training {training} - Test loss: {score[0]}")
 print(f"Model {model} | Training {training} - Test accuracy: {round(score[1]*100, 2)} %") 
 
 # Visualização dos resultados
-mod12_plots1 = plots1(history)
-mod12_plots2 = plots2(history, model, training, batch_size, epochs)
+mod12_plots = plots(history, model, training, batch_size, epochs)
 
 # ==========
 #  MODELO 2
 # ==========
-model = "2"
+model = 2
 
 # 3. Desenvolva (i.e., aprimore a arquitetura) e treine sua rede (a partir do zero), tentando conseguir uma acurácia de validação de pelo menos 99.2%.
 # (Lembre que usando apenas camadas densas é difícil conseguir uma acurácia muito superior a 98%.) 
@@ -308,8 +294,7 @@ print(f"Model {model} | Training {training} - Test loss: {score[0]}")
 print(f"Model {model} | Training {training} - Test accuracy: {round(score[1]*100, 2)} %") 
 
 # Visualização dos resultados
-mod21_plots1 = plots1(history)
-mod21_plots2 = plots2(history, model, training, batch_size, epochs)
+mod21_plots = plots(history, model, training, batch_size, epochs)
 
 # TREINAMENTO 2
 training = 2
@@ -333,8 +318,7 @@ print(f"Model {model} | Training {training} - Test loss: {score[0]}")
 print(f"Model {model} | Training {training} - Test accuracy: {round(score[1]*100, 2)} %") 
 
 # Visualização dos resultados
-mod22_plots1 = plots1(history)
-mod22_plots2 = plots2(history, model, training, batch_size, epochs)
+mod22_plots = plots(history, model, training, batch_size, epochs)
 
 # 4. (OPCIONAL) Por que o uso de Dropout faz com que o desempenho de treinamento comece bastante inferior ao de validação?
 # RESPOSTA: Porque o dropout é ativado apenas no treinamento e desativado na validação.
@@ -398,7 +382,7 @@ plt.show()
 # =================================
 #  MODELO 3 - idêntico ao modelo 2
 # =================================
-model = "3"
+model = 3
 
 def make_model():
     model = keras.Sequential(
@@ -441,8 +425,7 @@ print(f"Model {model} | Training {training} - Test loss: {score[0]}")
 print(f"Model {model} | Training {training} - Test accuracy: {round(score[1]*100, 2)} %") 
 
 # Visualização dos resultados
-mod31_plots1 = plots1(history)
-mod31_plots2 = plots2(history, model, training, batch_size, epochs)
+mod31_plots = plots(history, model, training, batch_size, epochs)
 
 # TREINAMENTO 2
 training = 2
@@ -466,8 +449,7 @@ print(f"Model {model} | Training {training} - Test loss: {score[0]}")
 print(f"Model {model} | Training {training} - Test accuracy: {round(score[1]*100, 2)} %") 
 
 # Visualização dos resultados
-mod32_plots1 = plots1(history)
-mod32_plots2 = plots2(history, model, training, batch_size, epochs)
+mod32_plots = plots(history, model, training, batch_size, epochs)
 
 # Sinal de sobreajuste a partir da época 40
 
@@ -518,7 +500,7 @@ for i in range(5):
 # =================================
 #  MODELO 4 - idêntico ao modelo 3
 # =================================
-model = "4"
+model = 4
 
 # 6. Inicialmente, apenas converta a mesma arquitetura utilizada no MNIST para o formato das imagens do CIFAR-10 e treine o modelo. 
 # Note que agora não é mais necessário usar uma camada Reshape. Certifique-se de escolher um batch size e taxa de aprendizado apropriadas. 
@@ -564,11 +546,10 @@ print(f"Model {model} | Training {training} - Test loss: {score[0]}")
 print(f"Model {model} | Training {training} - Test accuracy: {round(score[1]*100, 2)} %") 
 
 # Visualização dos resultados
-mod41_plots1 = plots1(history)
-mod41_plots2 = plots2(history, model, training, batch_size, epochs)
+mod41_plots = plots(history, model, training, batch_size, epochs)
 
 # 7. Por que você acha que isso acontece? Explique.
-# Porque o CIFAR-10 é um dataset mais complexo que o MNIST e o Fashion-MNIST em 
+# RESPOSTA: Porque o CIFAR-10 é um dataset mais complexo que o MNIST e o Fashion-MNIST em 
 # termos de dimensões das imagens (32 x 32 x 3) e a arquitetura já se torna simples para
 # ser utilizada no CIFAR-10. 
 # As imagens do CIFAR-10, inclusive, além de coloridas, são mais heterogêneas, apresentando cenários mais
@@ -665,8 +646,7 @@ print(f"Model {model} | Training {training} - Test loss: {score[0]}")
 print(f"Model {model} | Training {training} - Test accuracy: {round(score[1]*100, 2)} %") 
 
 # Visualização dos resultados
-mod51_plots1 = plots1(history)
-mod51_plots2 = plots2(history, model, training, batch_size, epochs)
+mod51_plots = plots(history, model, training, batch_size, epochs)
 
 # TREINAMENTO 2
 training = 2
@@ -700,8 +680,7 @@ print(f"Model {model} | Training {training} - Test loss: {score[0]}")
 print(f"Model {model} | Training {training} - Test accuracy: {round(score[1]*100, 2)} %") 
 
 # Visualização dos resultados
-mod52_plots1 = plots1(history)
-mod52_plots2 = plots2(history, model, training, batch_size, epochs)
+mod52_plots = plots(history, model, training, batch_size, epochs)
 
 # ==================================================================
 # 2. USANDO UMA REDE PRÉ-TREINADA - TRANSFER LEARNING e FINE-TUNING 
@@ -822,7 +801,7 @@ model6 = keras.Model(inputs, outputs)
 model6.summary(show_trainable=True)
 
 # Hiperparâmetros
-epochs = 2
+epochs = 10
 model6.compile(
     optimizer=keras.optimizers.Adam(),
     loss=keras.losses.BinaryCrossentropy(from_logits=True),
@@ -839,8 +818,7 @@ print(f"Transfer-learning \n Model {model} | Training {training} - Test loss: {s
 print(f"Transfer-learning \n Model {model} | Training {training} - Test accuracy: {round(score[1]*100, 2)} %") 
 
 # Visualização dos resultados
-mod61_plots1 = plots1(history)
-mod61_plots2 = plots2(history, model, training, batch_size, epochs)
+mod61_plots = plots(history, model, training, batch_size, epochs)
 
 # FINE-TUNING
 # Descongelar o modelo
@@ -856,7 +834,7 @@ base_model.trainable = True
 model6.summary(show_trainable=True)
 
 # Hiperparâmetros
-epochs = 1
+epochs = 10
 model6.compile(
     optimizer=keras.optimizers.Adam(1e-5),  
     loss=keras.losses.BinaryCrossentropy(from_logits=True),
@@ -873,8 +851,7 @@ print(f"Fine-tuning after Transfer-learning \n Model {model} | Training {trainin
 print(f"Fine-tuning after Transfer-learning \n Model {model} | Training {training} - Test accuracy: {round(score[1]*100, 2)} %")
 
 # Visualização dos resultados
-mod62_plots1 = plots1(history)
-mod62_plots2 = plots2(history, model, training, batch_size, epochs)
+mod62_plots = plots(history, model, training, batch_size, epochs)
 
 # ==================================================================
 # 3. VISUALIZANDO OS PADRÕES APRENDIDOS 
